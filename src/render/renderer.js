@@ -1,5 +1,5 @@
 import { article } from "../content/article.js";
-import { spawnFire, updateFire, getFireBoxes } from "../dragon/fire.js";
+import { spawnFire, updateFire } from "../dragon/fire.js";
 import { drawDragon, drawFire } from "../dragon/draw.js";
 import { createDragon, getDragonBoxes, setDragonPounce, updateDragon } from "../dragon/state.js";
 import { drawHeatText } from "../effects/text-heat.js";
@@ -7,7 +7,7 @@ import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
 import { createTextMeasurer } from "../layout/measure.js";
 import { prepareParagraphs } from "../layout/prepare.js";
-import { getArticleTop, getBambooBackdrop, getPageOrigin, getTitleLayout } from "./composition.js";
+import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getPageOrigin, getTitleLayout } from "./composition.js";
 import { ACCENT, BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, getMetrics } from "./constants.js";
 
 function getDropcapRect(metrics) {
@@ -50,16 +50,7 @@ function drawBamboo(context, assets, width, height) {
 }
 
 function paragraphLineBoxes(metrics, dropcap, cat, leaves) {
-  const boxes = [
-    {
-      x: dropcap.x - 2,
-      y: dropcap.y - 2,
-      width: dropcap.width + 4,
-      height: dropcap.height + 4
-    },
-    ...getDragonBoxes(cat, metrics.isMobile ? 6 : 10),
-    ...getFireBoxes(leaves, 10)
-  ];
+  const boxes = collectTextFlowBoxes(dropcap, getDragonBoxes(cat, metrics.isMobile ? 6 : 10));
 
   if (metrics.isMobile) {
     return boxes.filter((box) => box.x < window.innerWidth * 0.56);

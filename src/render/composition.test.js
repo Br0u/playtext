@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getArticleTop, getBambooBackdrop, getTitleLayout } from "./composition.js";
+import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getTitleLayout } from "./composition.js";
 import { getMetrics } from "./constants.js";
 
 describe("getMetrics", () => {
@@ -46,5 +46,18 @@ describe("getBambooBackdrop", () => {
     expect(backdrop.width).toBeGreaterThan(1320);
     expect(backdrop.height).toBeGreaterThan(900);
     expect(backdrop.alpha).toBeLessThan(0.08);
+  });
+});
+
+describe("collectTextFlowBoxes", () => {
+  it("keeps paragraph flow stable by ignoring transient fire particles", () => {
+    const dropcap = { x: 100, y: 120, width: 40, height: 60 };
+    const dragonBoxes = [{ x: 180, y: 150, width: 30, height: 30 }];
+    const fireBoxes = [{ x: 220, y: 160, width: 18, height: 18 }];
+
+    expect(collectTextFlowBoxes(dropcap, dragonBoxes, fireBoxes)).toEqual([
+      { x: 98, y: 118, width: 44, height: 64 },
+      { x: 180, y: 150, width: 30, height: 30 }
+    ]);
   });
 });

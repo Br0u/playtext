@@ -45,3 +45,15 @@ export function getBambooBackdrop(width, height, image) {
     alpha: width <= 768 ? 0.05 : 0.062
   };
 }
+
+export function collectTextFlowBoxes(dropcap, dragonBoxes) {
+  return [
+    {
+      x: dropcap.x - 2,
+      y: dropcap.y - 2,
+      width: dropcap.width + 4,
+      height: dropcap.height + 4
+    },
+    ...dragonBoxes
+  ];
+}
