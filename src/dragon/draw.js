@@ -1,95 +1,88 @@
 import { ACCENT, INK } from "../render/constants.js";
 
-function flipX(point, facing) {
-  return { x: point.x * facing, y: point.y };
+function world(cat, point) {
+  return {
+    x: cat.x + point.x * cat.facing,
+    y: cat.y + point.y
+  };
 }
 
-function p(context, point, cat) {
-  const flipped = flipX(point, cat.facing);
-  return [cat.x + flipped.x, cat.y + flipped.y];
+function drawAsciiGlyph(context, glyph, x, y, rotation, size, color) {
+  context.save();
+  context.translate(x, y);
+  context.rotate(rotation);
+  context.fillStyle = color;
+  context.font = `${size}px "SFMono-Regular", "Menlo", "Monaco", monospace`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(glyph, 0, 0);
+  context.restore();
 }
 
-function line(context, start, end, width, color) {
-  context.strokeStyle = color;
-  context.lineWidth = width;
-  context.lineCap = "round";
-  context.beginPath();
-  context.moveTo(start[0], start[1]);
-  context.lineTo(end[0], end[1]);
-  context.stroke();
-}
+function drawAsciiStroke(context, start, end, glyph, spacing, size, color) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx);
+  const steps = Math.max(1, Math.floor(length / spacing));
 
-function quad(context, a, c, b, width, color) {
-  context.strokeStyle = color;
-  context.lineWidth = width;
-  context.lineCap = "round";
-  context.beginPath();
-  context.moveTo(a[0], a[1]);
-  context.quadraticCurveTo(c[0], c[1], b[0], b[1]);
-  context.stroke();
+  for (let index = 0; index <= steps; index += 1) {
+    const t = steps === 0 ? 0 : index / steps;
+    drawAsciiGlyph(
+      context,
+      glyph,
+      start.x + dx * t,
+      start.y + dy * t,
+      angle,
+      size,
+      color
+    );
+  }
 }
 
 export function drawDragon(context, cat) {
   const s = cat.scale;
   const sk = cat.skeleton;
-
-  const hip = p(context, sk.hip, cat);
-  const body = p(context, sk.body, cat);
-  const chest = p(context, sk.chest, cat);
-  const head = p(context, sk.head, cat);
-  const earA = p(context, sk.earA, cat);
-  const earB = p(context, sk.earB, cat);
-  const tailBase = p(context, sk.tailBase, cat);
-  const tailMid = p(context, sk.tailMid, cat);
-  const tailTip = p(context, sk.tailTip, cat);
-  const pawFrontA = p(context, sk.pawFrontA, cat);
-  const pawFrontB = p(context, sk.pawFrontB, cat);
-  const pawBackA = p(context, sk.pawBackA, cat);
-  const pawBackB = p(context, sk.pawBackB, cat);
+  const spineRear = world(cat, sk.spineRear);
+  const spineMid = world(cat, sk.spineMid);
+  const chest = world(cat, sk.chest);
+  const head = world(cat, sk.head);
+  const earA = world(cat, sk.earA);
+  const earB = world(cat, sk.earB);
+  const nose = world(cat, sk.nose);
+  const frontShoulder = world(cat, sk.frontShoulder);
+  const backShoulder = world(cat, sk.backShoulder);
+  const pawFrontA = world(cat, sk.pawFrontA);
+  const pawFrontB = world(cat, sk.pawFrontB);
+  const pawBackA = world(cat, sk.pawBackA);
+  const pawBackB = world(cat, sk.pawBackB);
+  const tailBase = world(cat, sk.tailBase);
+  const tailMid = world(cat, sk.tailMid);
+  const tailTip = world(cat, sk.tailTip);
 
   context.save();
   context.globalAlpha = 0.96;
 
-  quad(context, hip, body, chest, 34 * s, INK);
-  quad(context, chest, [cat.x + cat.facing * 52 * s, cat.y - 20 * s], head, 26 * s, INK);
-  line(context, body, pawFrontA, 10 * s, INK);
-  line(context, chest, pawFrontB, 9 * s, INK);
-  line(context, hip, pawBackA, 10 * s, INK);
-  line(context, [cat.x + cat.facing * (-10 * s), cat.y + 10 * s], pawBackB, 9 * s, INK);
-  quad(context, tailBase, tailMid, tailTip, 8 * s, INK);
+  drawAsciiStroke(context, spineRear, spineMid, "@", 12 * s, 18 * s, INK);
+  drawAsciiStroke(context, spineMid, chest, "@", 12 * s, 18 * s, INK);
+  drawAsciiStroke(context, chest, head, "+", 10 * s, 14 * s, INK);
+  drawAsciiStroke(context, frontShoulder, pawFrontA, "¥", 10 * s, 14 * s, INK);
+  drawAsciiStroke(context, chest, pawFrontB, "¥", 10 * s, 14 * s, INK);
+  drawAsciiStroke(context, backShoulder, pawBackA, "¥", 10 * s, 14 * s, INK);
+  drawAsciiStroke(context, spineMid, pawBackB, "¥", 10 * s, 14 * s, INK);
+  drawAsciiStroke(context, tailBase, tailMid, "~", 10 * s, 12 * s, INK);
+  drawAsciiStroke(context, tailMid, tailTip, "*", 10 * s, 12 * s, INK);
 
-  context.fillStyle = INK;
-  context.beginPath();
-  context.ellipse(head[0], head[1], 24 * s, 20 * s, 0, 0, Math.PI * 2);
-  context.fill();
+  drawAsciiGlyph(context, "@", head.x, head.y, 0, 24 * s, INK);
+  drawAsciiGlyph(context, "*", earA.x, earA.y, -0.8, 14 * s, INK);
+  drawAsciiGlyph(context, "*", earB.x, earB.y, 0.8, 14 * s, INK);
+  drawAsciiGlyph(context, "-", nose.x, nose.y, 0, 12 * s, INK);
+  drawAsciiGlyph(context, "+", spineMid.x, spineMid.y, 0, 14 * s, ACCENT);
+  drawAsciiGlyph(context, "+", chest.x, chest.y, 0, 14 * s, ACCENT);
 
-  context.beginPath();
-  context.moveTo(earA[0], earA[1]);
-  context.lineTo(head[0] - 8 * s * cat.facing, head[1] - 12 * s);
-  context.lineTo(head[0] + 2 * s * cat.facing, head[1] - 2 * s);
-  context.closePath();
-  context.fill();
-
-  context.beginPath();
-  context.moveTo(earB[0], earB[1]);
-  context.lineTo(head[0] + 10 * s * cat.facing, head[1] - 12 * s);
-  context.lineTo(head[0] - 2 * s * cat.facing, head[1] - 2 * s);
-  context.closePath();
-  context.fill();
-
-  context.fillStyle = "#f5f0e4";
-  context.beginPath();
-  context.arc(head[0] + 8 * s * cat.facing, head[1] - 2 * s, 2.6 * s, 0, Math.PI * 2);
-  context.fill();
-
-  context.strokeStyle = ACCENT;
-  context.lineWidth = 1.8 * s;
-  context.beginPath();
-  context.moveTo(head[0] + 4 * s * cat.facing, head[1] + 6 * s);
-  context.lineTo(head[0] + 18 * s * cat.facing, head[1] + 2 * s);
-  context.moveTo(head[0] + 4 * s * cat.facing, head[1] + 8 * s);
-  context.lineTo(head[0] + 18 * s * cat.facing, head[1] + 10 * s);
-  context.stroke();
+  drawAsciiGlyph(context, ".", head.x + 6 * s * cat.facing, head.y - 2 * s, 0, 12 * s, "#f5f0e4");
+  drawAsciiGlyph(context, "-", head.x + 16 * s * cat.facing, head.y + 5 * s, 0.1, 10 * s, ACCENT);
+  drawAsciiGlyph(context, "-", head.x + 16 * s * cat.facing, head.y + 9 * s, -0.05, 10 * s, ACCENT);
 
   context.restore();
 }

@@ -1,20 +1,60 @@
 function createSkeleton(scale) {
   const s = scale;
   return {
-    body: { x: 0, y: 0 },
-    chest: { x: 28 * s, y: -6 * s },
-    head: { x: 60 * s, y: -32 * s },
-    earA: { x: 48 * s, y: -58 * s },
-    earB: { x: 70 * s, y: -60 * s },
-    hip: { x: -36 * s, y: 0 },
-    tailBase: { x: -54 * s, y: -6 * s },
-    tailMid: { x: -86 * s, y: -40 * s },
-    tailTip: { x: -72 * s, y: -86 * s },
-    pawFrontA: { x: 30 * s, y: 42 * s },
-    pawFrontB: { x: 52 * s, y: 42 * s },
-    pawBackA: { x: -18 * s, y: 44 * s },
-    pawBackB: { x: 2 * s, y: 44 * s }
+    spineRear: { x: -34 * s, y: 4 * s },
+    spineMid: { x: 0, y: 0 },
+    chest: { x: 34 * s, y: -6 * s },
+    head: { x: 70 * s, y: -28 * s },
+    earA: { x: 56 * s, y: -54 * s },
+    earB: { x: 78 * s, y: -56 * s },
+    nose: { x: 90 * s, y: -22 * s },
+    frontShoulder: { x: 32 * s, y: 10 * s },
+    backShoulder: { x: -8 * s, y: 14 * s },
+    pawFrontA: { x: 26 * s, y: 46 * s },
+    pawFrontB: { x: 54 * s, y: 44 * s },
+    pawBackA: { x: -22 * s, y: 48 * s },
+    pawBackB: { x: 4 * s, y: 50 * s },
+    tailBase: { x: -54 * s, y: -4 * s },
+    tailMid: { x: -92 * s, y: -34 * s },
+    tailTip: { x: -76 * s, y: -84 * s }
   };
+}
+
+function moveToward(current, target, maxStep) {
+  const delta = target - current;
+  if (Math.abs(delta) <= maxStep) {
+    return target;
+  }
+  return current + Math.sign(delta) * maxStep;
+}
+
+function clampMagnitude(dx, dy, maxMagnitude) {
+  const magnitude = Math.hypot(dx, dy);
+  if (magnitude <= maxMagnitude || magnitude === 0) {
+    return { dx, dy };
+  }
+  const scale = maxMagnitude / magnitude;
+  return { dx: dx * scale, dy: dy * scale };
+}
+
+function partBox(cat, point, radius, padding) {
+  const x = cat.x + point.x * cat.facing;
+  const y = cat.y + point.y;
+  const r = radius + padding;
+  return { x: x - r, y: y - r, width: r * 2, height: r * 2 };
+}
+
+function segmentBoxes(cat, start, end, radius, padding, slices = 3) {
+  const boxes = [];
+  for (let index = 0; index <= slices; index += 1) {
+    const t = index / slices;
+    const point = {
+      x: start.x + (end.x - start.x) * t,
+      y: start.y + (end.y - start.y) * t
+    };
+    boxes.push(partBox(cat, point, radius, padding));
+  }
+  return boxes;
 }
 
 export function createDragon(anchorX, anchorY, scale) {
@@ -23,6 +63,8 @@ export function createDragon(anchorX, anchorY, scale) {
     y: anchorY,
     homeX: anchorX,
     homeY: anchorY,
+    velocityX: 0,
+    velocityY: 0,
     scale,
     facing: 1,
     phase: 0,
@@ -33,37 +75,41 @@ export function createDragon(anchorX, anchorY, scale) {
   };
 }
 
-function animateSkeleton(cat, now, pointer, isIdle) {
+function animateSkeleton(cat, pointer, isIdle) {
   const s = cat.scale;
-  const speed = cat.pose === "pounce" ? 0.22 : 0.11;
-  const targetX = isIdle ? cat.homeX : pointer.x - 44 * s;
-  const targetY = isIdle ? cat.homeY : pointer.y - 34 * s;
-  cat.x += (targetX - cat.x) * speed;
-  cat.y += (targetY - cat.y) * speed;
-  cat.phase += cat.pose === "pounce" ? 0.32 : 0.17;
+  const targetX = isIdle ? cat.homeX : pointer.x - 48 * s;
+  const targetY = isIdle ? cat.homeY : pointer.y - 22 * s;
+  const desired = clampMagnitude(targetX - cat.x, targetY - cat.y, (cat.pose === "pounce" ? 12 : 6) * s);
 
-  const step = Math.sin(cat.phase);
+  cat.velocityX = cat.velocityX * 0.82 + desired.dx * 0.18;
+  cat.velocityY = cat.velocityY * 0.82 + desired.dy * 0.18;
+  cat.x = moveToward(cat.x, targetX, Math.max(1.4 * s, Math.abs(cat.velocityX)));
+  cat.y = moveToward(cat.y, targetY, Math.max(1.2 * s, Math.abs(cat.velocityY)));
+  cat.phase += cat.pose === "pounce" ? 0.28 : 0.12;
+
+  const pace = Math.sin(cat.phase);
   const counter = Math.sin(cat.phase + Math.PI);
-  const lift = Math.max(0, Math.sin(cat.phase * 0.5)) * 4 * s;
-  const reach = cat.pose === "pounce" ? 10 * s : 4 * s;
+  const bodyRise = Math.max(0, Math.sin(cat.phase * 0.5)) * 4 * s;
+  const neckDip = isIdle ? 0 : 4 * s;
+  const reach = cat.pose === "pounce" ? 13 * s : 7 * s;
 
   cat.skeleton = {
-    body: { x: 0, y: lift },
-    chest: { x: 28 * s, y: -8 * s + lift - Math.abs(step) * 3 * s },
-    head: {
-      x: 62 * s + (cat.pose === "pounce" ? 10 * s : 0),
-      y: -34 * s + lift - (isIdle ? 0 : 6 * s)
-    },
-    earA: { x: 48 * s, y: -58 * s + lift },
-    earB: { x: 70 * s, y: -60 * s + lift },
-    hip: { x: -38 * s, y: 2 * s + lift + Math.abs(counter) * 2 * s },
-    tailBase: { x: -58 * s, y: -4 * s + lift },
-    tailMid: { x: -92 * s, y: -36 * s + Math.sin(cat.phase * 0.8) * 16 * s },
-    tailTip: { x: -70 * s, y: -88 * s + Math.cos(cat.phase * 0.8) * 22 * s },
-    pawFrontA: { x: 28 * s + step * reach, y: 44 * s - Math.max(0, step) * 10 * s },
-    pawFrontB: { x: 52 * s + counter * reach, y: 42 * s - Math.max(0, counter) * 10 * s },
-    pawBackA: { x: -16 * s + counter * reach * 0.7, y: 45 * s - Math.max(0, counter) * 9 * s },
-    pawBackB: { x: 4 * s + step * reach * 0.7, y: 46 * s - Math.max(0, step) * 9 * s }
+    spineRear: { x: -36 * s, y: 4 * s + bodyRise + Math.abs(counter) * 3 * s },
+    spineMid: { x: 0, y: bodyRise },
+    chest: { x: 34 * s, y: -6 * s + bodyRise - Math.abs(pace) * 4 * s },
+    head: { x: 74 * s + (cat.pose === "pounce" ? 8 * s : 0), y: -28 * s + bodyRise - neckDip },
+    earA: { x: 58 * s, y: -54 * s + bodyRise - neckDip },
+    earB: { x: 80 * s, y: -56 * s + bodyRise - neckDip },
+    nose: { x: 94 * s, y: -22 * s + bodyRise - neckDip },
+    frontShoulder: { x: 32 * s, y: 10 * s + bodyRise },
+    backShoulder: { x: -10 * s, y: 14 * s + bodyRise },
+    pawFrontA: { x: 24 * s + pace * reach, y: 46 * s - Math.max(0, pace) * 14 * s },
+    pawFrontB: { x: 56 * s + counter * reach, y: 44 * s - Math.max(0, counter) * 14 * s },
+    pawBackA: { x: -24 * s + counter * reach * 0.72, y: 48 * s - Math.max(0, counter) * 12 * s },
+    pawBackB: { x: 6 * s + pace * reach * 0.72, y: 50 * s - Math.max(0, pace) * 12 * s },
+    tailBase: { x: -58 * s, y: -4 * s + bodyRise },
+    tailMid: { x: -96 * s, y: -34 * s + Math.sin(cat.phase * 0.7) * 18 * s },
+    tailTip: { x: -78 * s, y: -86 * s + Math.cos(cat.phase * 0.7) * 24 * s }
   };
 }
 
@@ -77,7 +123,7 @@ export function updateDragon(cat, now, pointer, isIdle) {
   }
 
   cat.facing = pointer.x >= cat.x ? 1 : -1;
-  animateSkeleton(cat, now, pointer, isIdle);
+  animateSkeleton(cat, pointer, isIdle);
   return true;
 }
 
@@ -87,14 +133,16 @@ export function setDragonPounce(cat, now) {
 }
 
 export function getDragonBoxes(cat, padding = 12) {
-  const width = 176 * cat.scale;
-  const height = 128 * cat.scale;
+  const sk = cat.skeleton;
   return [
-    {
-      x: cat.x - width / 2 - padding,
-      y: cat.y - height / 2 - padding,
-      width: width + padding * 2,
-      height: height + padding * 2
-    }
+    ...segmentBoxes(cat, sk.spineRear, sk.spineMid, 15 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.spineMid, sk.chest, 14 * cat.scale, padding, 2),
+    partBox(cat, sk.head, 16 * cat.scale, padding),
+    ...segmentBoxes(cat, sk.frontShoulder, sk.pawFrontA, 5 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.chest, sk.pawFrontB, 5 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.backShoulder, sk.pawBackA, 5 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.spineMid, sk.pawBackB, 5 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.tailBase, sk.tailMid, 4 * cat.scale, padding, 2),
+    ...segmentBoxes(cat, sk.tailMid, sk.tailTip, 3 * cat.scale, padding, 2)
   ];
 }
