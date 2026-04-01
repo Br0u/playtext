@@ -1,7 +1,7 @@
 import { article } from "../content/article.js";
 import { spawnFire, updateFire } from "../dragon/fire.js";
 import { drawDragon, drawFire } from "../dragon/draw.js";
-import { createDragon, getDragonBoxes, setDragonPounce, updateDragon } from "../dragon/state.js";
+import { createDragon, setDragonPounce, updateDragon } from "../dragon/state.js";
 import { drawHeatText } from "../effects/text-heat.js";
 import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
@@ -49,14 +49,8 @@ function drawBamboo(context, assets, width, height) {
   context.restore();
 }
 
-function paragraphLineBoxes(metrics, dropcap, cat, leaves) {
-  const boxes = collectTextFlowBoxes(dropcap, getDragonBoxes(cat, metrics.isMobile ? 6 : 10));
-
-  if (metrics.isMobile) {
-    return boxes.filter((box) => box.x < window.innerWidth * 0.56);
-  }
-
-  return boxes;
+function paragraphLineBoxes(dropcap) {
+  return collectTextFlowBoxes(dropcap);
 }
 
 function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, boxes, particles }) {
@@ -177,7 +171,7 @@ export function createRenderer(canvas, assets) {
     drawTitle(offscreenContext, metrics, pageOrigin);
     const dropcap = drawDropcap(offscreenContext, metrics, pageOrigin);
 
-    const boxes = paragraphLineBoxes(metrics, dropcap, state.dragon, state.fire);
+    const boxes = paragraphLineBoxes(dropcap);
     renderArticle({
       context: offscreenContext,
       metrics,
