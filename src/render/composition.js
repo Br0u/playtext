@@ -46,13 +46,43 @@ export function getBambooBackdrop(width, height, image) {
   };
 }
 
-export function collectTextFlowBoxes(dropcap) {
+export function getDragonTextFlowBox(cat, metrics, pageOrigin) {
+  const textLeft = pageOrigin.x + metrics.margin;
+  const textRight = pageOrigin.x + metrics.pageWidth - metrics.margin;
+  const textTop = pageOrigin.y + getArticleTop(metrics) - Math.round(metrics.lineHeight * 0.4);
+  const textBottom = pageOrigin.y + metrics.pageHeight - metrics.margin;
+  const box = {
+    x: Math.round(cat.x - 23 * cat.scale),
+    y: Math.round(cat.y - 25 * cat.scale),
+    width: Math.round(46 * cat.scale),
+    height: Math.round(42 * cat.scale)
+  };
+
+  if (
+    box.x + box.width <= textLeft ||
+    box.x >= textRight ||
+    box.y + box.height <= textTop ||
+    box.y >= textBottom
+  ) {
+    return null;
+  }
+
+  return {
+    x: Math.max(textLeft, box.x),
+    y: Math.max(textTop, box.y),
+    width: Math.min(textRight, box.x + box.width) - Math.max(textLeft, box.x),
+    height: Math.min(textBottom, box.y + box.height) - Math.max(textTop, box.y)
+  };
+}
+
+export function collectTextFlowBoxes(dropcap, dragonBox = null) {
   return [
     {
       x: dropcap.x - 2,
       y: dropcap.y - 2,
       width: dropcap.width + 4,
       height: dropcap.height + 4
-    }
+    },
+    ...(dragonBox ? [dragonBox] : [])
   ];
 }

@@ -7,7 +7,7 @@ import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
 import { createTextMeasurer } from "../layout/measure.js";
 import { prepareParagraphs } from "../layout/prepare.js";
-import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getPageOrigin, getTitleLayout } from "./composition.js";
+import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getDragonTextFlowBox, getPageOrigin, getTitleLayout } from "./composition.js";
 import { ACCENT, BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, getMetrics } from "./constants.js";
 
 function getDropcapRect(metrics) {
@@ -49,8 +49,8 @@ function drawBamboo(context, assets, width, height) {
   context.restore();
 }
 
-function paragraphLineBoxes(dropcap) {
-  return collectTextFlowBoxes(dropcap);
+function paragraphLineBoxes(dropcap, cat, metrics, pageOrigin) {
+  return collectTextFlowBoxes(dropcap, getDragonTextFlowBox(cat, metrics, pageOrigin));
 }
 
 function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, boxes, particles }) {
@@ -171,7 +171,7 @@ export function createRenderer(canvas, assets) {
     drawTitle(offscreenContext, metrics, pageOrigin);
     const dropcap = drawDropcap(offscreenContext, metrics, pageOrigin);
 
-    const boxes = paragraphLineBoxes(dropcap);
+    const boxes = paragraphLineBoxes(dropcap, state.dragon, metrics, pageOrigin);
     renderArticle({
       context: offscreenContext,
       metrics,
