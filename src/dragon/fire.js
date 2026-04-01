@@ -13,8 +13,8 @@ export function spawnFire(cat, particles, now) {
   const burst = 2 + Math.floor(Math.random() * 3);
   for (let index = 0; index < burst; index += 1) {
     particles.push({
-      x: cat.x + randomBetween(-18, 18) * cat.scale,
-      y: cat.y - 24 * cat.scale + randomBetween(-12, 12) * cat.scale,
+      x: cat.x + randomBetween(18, 34) * cat.facing * cat.scale,
+      y: cat.y - 8 * cat.scale + randomBetween(-12, 12) * cat.scale,
       vx: randomBetween(1.2, 2.8) * cat.facing,
       vy: randomBetween(-1.6, 0.4),
       size: randomBetween(14, 24) * cat.scale,

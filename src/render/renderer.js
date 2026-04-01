@@ -1,7 +1,7 @@
 import { article } from "../content/article.js";
 import { spawnFire, updateFire, getFireBoxes } from "../dragon/fire.js";
 import { drawDragon, drawFire } from "../dragon/draw.js";
-import { createDragon, getDragonBoxes, updateDragon } from "../dragon/state.js";
+import { createDragon, getDragonBoxes, setDragonPounce, updateDragon } from "../dragon/state.js";
 import { drawHeatText } from "../effects/text-heat.js";
 import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
@@ -57,14 +57,14 @@ function drawTitle(context, metrics, pageOrigin) {
 
 function drawBamboo(context, assets, width, height) {
   context.save();
-  context.globalAlpha = 0.18;
-  const bambooWidth = Math.min(260, width * 0.24);
+  context.globalAlpha = 0.08;
+  const bambooWidth = Math.min(180, width * 0.18);
   const ratio = assets.bamboo.height / assets.bamboo.width;
   const bambooHeight = bambooWidth * ratio;
-  context.drawImage(assets.bamboo, width - bambooWidth * 0.92, 34, bambooWidth, bambooHeight);
-  context.translate(30, height - bambooHeight * 0.52);
+  context.drawImage(assets.bamboo, width - bambooWidth * 0.82, 42, bambooWidth, bambooHeight);
+  context.translate(42, height - bambooHeight * 0.34);
   context.rotate(-Math.PI / 2.9);
-  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.72, bambooHeight * 0.72);
+  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.44, bambooHeight * 0.44);
   context.restore();
 }
 
@@ -173,6 +173,9 @@ export function createRenderer(canvas, assets) {
 
   function setPressed(pressed) {
     state.pressed = pressed;
+    if (pressed) {
+      setDragonPounce(state.dragon, performance.now());
+    }
   }
 
   function renderFrame(now) {

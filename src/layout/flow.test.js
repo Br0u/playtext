@@ -81,4 +81,20 @@ describe("layoutParagraph", () => {
     expect(result.lines[0].text).not.toBe(result.lines[1].text);
     expect(result.lines.map((line) => line.text).join("")).toBe("盼望着盼望着东风来了春天的脚步近了");
   });
+
+  it("keeps ascii skeleton tokens intact when they contain spaces", () => {
+    const result = layoutParagraph({
+      text: "o==^==o /\\_/\\\\",
+      startY: 0,
+      lineHeight: 20,
+      lineInset: 0,
+      pageLeft: 0,
+      pageRight: 260,
+      measureText: makeMeasure(),
+      getLineExclusions: () => [],
+      minSegmentWidth: 20
+    });
+
+    expect(result.lines[0].text).toBe("o==^==o /\\_/\\\\");
+  });
 });
