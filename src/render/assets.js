@@ -8,10 +8,10 @@ function loadImage(src) {
 }
 
 export async function loadAssets() {
-  const [cat, bamboo] = await Promise.all([
-    loadImage("/images/cat-silhouette.svg"),
+  const [oneko, bamboo] = await Promise.all([
+    loadImage("/images/oneko.gif"),
     loadImage("/images/bamboo-ink.jpg")
   ]);
 
-  return { cat, bamboo };
+  return { oneko, bamboo };
 }

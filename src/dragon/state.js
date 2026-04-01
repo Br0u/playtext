@@ -1,148 +1,118 @@
-function createSkeleton(scale) {
-  const s = scale;
-  return {
-    spineRear: { x: -34 * s, y: 4 * s },
-    spineMid: { x: 0, y: 0 },
-    chest: { x: 34 * s, y: -6 * s },
-    head: { x: 70 * s, y: -28 * s },
-    earA: { x: 56 * s, y: -54 * s },
-    earB: { x: 78 * s, y: -56 * s },
-    nose: { x: 90 * s, y: -22 * s },
-    frontShoulder: { x: 32 * s, y: 10 * s },
-    backShoulder: { x: -8 * s, y: 14 * s },
-    pawFrontA: { x: 26 * s, y: 46 * s },
-    pawFrontB: { x: 54 * s, y: 44 * s },
-    pawBackA: { x: -22 * s, y: 48 * s },
-    pawBackB: { x: 4 * s, y: 50 * s },
-    tailBase: { x: -54 * s, y: -4 * s },
-    tailMid: { x: -92 * s, y: -34 * s },
-    tailTip: { x: -76 * s, y: -84 * s }
-  };
+const SPRITE_SIZE = 32;
+const NEKO_SPEED = 10;
+
+export const spriteSets = {
+  idle: [[-3, -3]],
+  alert: [[-7, -3]],
+  tired: [[-3, -2]],
+  sleeping: [[-2, 0], [-2, -1]],
+  scratchSelf: [[-5, 0], [-6, 0], [-7, 0]],
+  N: [[-1, -2], [-1, -3]],
+  NE: [[0, -2], [0, -3]],
+  E: [[-3, 0], [-3, -1]],
+  SE: [[-5, -1], [-5, -2]],
+  S: [[-6, -3], [-7, -2]],
+  SW: [[-5, -3], [-6, -1]],
+  W: [[-4, -2], [-4, -3]],
+  NW: [[-1, 0], [-1, -1]]
+};
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
-function moveToward(current, target, maxStep) {
-  const delta = target - current;
-  if (Math.abs(delta) <= maxStep) {
-    return target;
+function getViewportBounds() {
+  if (typeof window !== "undefined") {
+    return { width: window.innerWidth, height: window.innerHeight };
   }
-  return current + Math.sign(delta) * maxStep;
+  return { width: 1024, height: 768 };
 }
 
-function clampMagnitude(dx, dy, maxMagnitude) {
-  const magnitude = Math.hypot(dx, dy);
-  if (magnitude <= maxMagnitude || magnitude === 0) {
-    return { dx, dy };
+function chooseDirection(diffX, diffY, distance) {
+  let direction = diffY / distance > 0.5 ? "N" : "";
+  direction += diffY / distance < -0.5 ? "S" : "";
+  direction += diffX / distance > 0.5 ? "W" : "";
+  direction += diffX / distance < -0.5 ? "E" : "";
+  return direction || "E";
+}
+
+function setSprite(cat, name) {
+  cat.spriteName = name;
+  const frames = spriteSets[name];
+  cat.spriteFrame = frames[cat.frameCount % frames.length];
+}
+
+function idle(cat) {
+  cat.idleTime += 1;
+  if (cat.idleTime > 10 && cat.idleAnimation == null) {
+    setSprite(cat, "idle");
+    return;
   }
-  const scale = maxMagnitude / magnitude;
-  return { dx: dx * scale, dy: dy * scale };
-}
-
-function partBox(cat, point, radius, padding) {
-  const x = cat.x + point.x * cat.facing;
-  const y = cat.y + point.y;
-  const r = radius + padding;
-  return { x: x - r, y: y - r, width: r * 2, height: r * 2 };
-}
-
-function segmentBoxes(cat, start, end, radius, padding, slices = 3) {
-  const boxes = [];
-  for (let index = 0; index <= slices; index += 1) {
-    const t = index / slices;
-    const point = {
-      x: start.x + (end.x - start.x) * t,
-      y: start.y + (end.y - start.y) * t
-    };
-    boxes.push(partBox(cat, point, radius, padding));
-  }
-  return boxes;
+  setSprite(cat, cat.idleAnimation || "idle");
 }
 
 export function createDragon(anchorX, anchorY, scale) {
-  return {
+  const cat = {
     x: anchorX,
     y: anchorY,
     homeX: anchorX,
     homeY: anchorY,
-    velocityX: 0,
-    velocityY: 0,
     scale,
-    facing: 1,
-    phase: 0,
-    pose: "idle",
+    frameCount: 0,
+    idleTime: 0,
+    idleAnimation: null,
     poseUntil: 0,
-    fireCooldown: 0,
-    skeleton: createSkeleton(scale)
+    spriteName: "idle",
+    spriteFrame: spriteSets.idle[0],
+    fireCooldown: 0
   };
-}
-
-function animateSkeleton(cat, pointer, isIdle) {
-  const s = cat.scale;
-  const targetX = isIdle ? cat.homeX : pointer.x - 48 * s;
-  const targetY = isIdle ? cat.homeY : pointer.y - 22 * s;
-  const desired = clampMagnitude(targetX - cat.x, targetY - cat.y, (cat.pose === "pounce" ? 12 : 6) * s);
-
-  cat.velocityX = cat.velocityX * 0.82 + desired.dx * 0.18;
-  cat.velocityY = cat.velocityY * 0.82 + desired.dy * 0.18;
-  cat.x = moveToward(cat.x, targetX, Math.max(1.4 * s, Math.abs(cat.velocityX)));
-  cat.y = moveToward(cat.y, targetY, Math.max(1.2 * s, Math.abs(cat.velocityY)));
-  cat.phase += cat.pose === "pounce" ? 0.28 : 0.12;
-
-  const pace = Math.sin(cat.phase);
-  const counter = Math.sin(cat.phase + Math.PI);
-  const bodyRise = Math.max(0, Math.sin(cat.phase * 0.5)) * 4 * s;
-  const neckDip = isIdle ? 0 : 4 * s;
-  const reach = cat.pose === "pounce" ? 13 * s : 7 * s;
-
-  cat.skeleton = {
-    spineRear: { x: -36 * s, y: 4 * s + bodyRise + Math.abs(counter) * 3 * s },
-    spineMid: { x: 0, y: bodyRise },
-    chest: { x: 34 * s, y: -6 * s + bodyRise - Math.abs(pace) * 4 * s },
-    head: { x: 74 * s + (cat.pose === "pounce" ? 8 * s : 0), y: -28 * s + bodyRise - neckDip },
-    earA: { x: 58 * s, y: -54 * s + bodyRise - neckDip },
-    earB: { x: 80 * s, y: -56 * s + bodyRise - neckDip },
-    nose: { x: 94 * s, y: -22 * s + bodyRise - neckDip },
-    frontShoulder: { x: 32 * s, y: 10 * s + bodyRise },
-    backShoulder: { x: -10 * s, y: 14 * s + bodyRise },
-    pawFrontA: { x: 24 * s + pace * reach, y: 46 * s - Math.max(0, pace) * 14 * s },
-    pawFrontB: { x: 56 * s + counter * reach, y: 44 * s - Math.max(0, counter) * 14 * s },
-    pawBackA: { x: -24 * s + counter * reach * 0.72, y: 48 * s - Math.max(0, counter) * 12 * s },
-    pawBackB: { x: 6 * s + pace * reach * 0.72, y: 50 * s - Math.max(0, pace) * 12 * s },
-    tailBase: { x: -58 * s, y: -4 * s + bodyRise },
-    tailMid: { x: -96 * s, y: -34 * s + Math.sin(cat.phase * 0.7) * 18 * s },
-    tailTip: { x: -78 * s, y: -86 * s + Math.cos(cat.phase * 0.7) * 24 * s }
-  };
+  return cat;
 }
 
 export function updateDragon(cat, now, pointer, isIdle) {
-  if (now < cat.poseUntil) {
-    cat.pose = "pounce";
-  } else if (!isIdle) {
-    cat.pose = "prowl";
-  } else {
-    cat.pose = "idle";
+  cat.frameCount += 1;
+  const diffX = cat.x - pointer.x;
+  const diffY = cat.y - pointer.y;
+  const distance = Math.hypot(diffX, diffY);
+
+  if (isIdle || distance < NEKO_SPEED || distance < 48) {
+    idle(cat);
+    return true;
   }
 
-  cat.facing = pointer.x >= cat.x ? 1 : -1;
-  animateSkeleton(cat, pointer, isIdle);
+  if (cat.idleTime > 1) {
+    setSprite(cat, "alert");
+    cat.idleTime = Math.min(cat.idleTime, 7);
+    cat.idleTime -= 1;
+    return true;
+  }
+
+  cat.idleAnimation = null;
+  cat.idleTime = 0;
+
+  const direction = chooseDirection(diffX, diffY, distance);
+  setSprite(cat, direction);
+
+  cat.x -= (diffX / distance) * NEKO_SPEED * cat.scale;
+  cat.y -= (diffY / distance) * NEKO_SPEED * cat.scale;
+  const bounds = getViewportBounds();
+  cat.x = clamp(cat.x, 16 * cat.scale, bounds.width - 16 * cat.scale);
+  cat.y = clamp(cat.y, 16 * cat.scale, bounds.height - 16 * cat.scale);
   return true;
 }
 
-export function setDragonPounce(cat, now) {
-  cat.pose = "pounce";
-  cat.poseUntil = now + 420;
+export function setDragonPounce(cat) {
+  cat.idleTime = 2;
 }
 
-export function getDragonBoxes(cat, padding = 12) {
-  const sk = cat.skeleton;
+export function getDragonBoxes(cat, padding = 6) {
+  const scale = cat.scale;
   return [
-    ...segmentBoxes(cat, sk.spineRear, sk.spineMid, 15 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.spineMid, sk.chest, 14 * cat.scale, padding, 2),
-    partBox(cat, sk.head, 16 * cat.scale, padding),
-    ...segmentBoxes(cat, sk.frontShoulder, sk.pawFrontA, 5 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.chest, sk.pawFrontB, 5 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.backShoulder, sk.pawBackA, 5 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.spineMid, sk.pawBackB, 5 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.tailBase, sk.tailMid, 4 * cat.scale, padding, 2),
-    ...segmentBoxes(cat, sk.tailMid, sk.tailTip, 3 * cat.scale, padding, 2)
+    { x: cat.x - 11 * scale - padding, y: cat.y - 12 * scale - padding, width: 14 * scale + padding * 2, height: 12 * scale + padding * 2 },
+    { x: cat.x - 1 * scale - padding, y: cat.y - 9 * scale - padding, width: 14 * scale + padding * 2, height: 10 * scale + padding * 2 },
+    { x: cat.x - 8 * scale - padding, y: cat.y + 6 * scale - padding, width: 6 * scale + padding * 2, height: 10 * scale + padding * 2 },
+    { x: cat.x + 2 * scale - padding, y: cat.y + 6 * scale - padding, width: 6 * scale + padding * 2, height: 10 * scale + padding * 2 }
   ];
 }
+
+export { SPRITE_SIZE };
