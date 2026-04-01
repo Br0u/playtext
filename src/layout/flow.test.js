@@ -97,4 +97,21 @@ describe("layoutParagraph", () => {
 
     expect(result.lines[0].text).toBe("o==^==o /\\_/\\\\");
   });
+
+  it("supports a wide first-line exclusion while keeping later chinese lines full width", () => {
+    const result = layoutParagraph({
+      text: "燕子去了有再来的时候杨柳枯了有再青的时候桃花谢了有再开的时候但是聪明的你告诉我我们的日子为什么一去不复返呢",
+      startY: 0,
+      lineHeight: 24,
+      lineInset: 0,
+      pageLeft: 0,
+      pageRight: 240,
+      measureText: makeMeasure(),
+      getLineExclusions: (top) => (top < 48 ? [{ left: 0, right: 90 }] : []),
+      minSegmentWidth: 30
+    });
+
+    expect(result.lines[0].x).toBe(90);
+    expect(result.lines.some((line) => line.x < 90)).toBe(true);
+  });
 });

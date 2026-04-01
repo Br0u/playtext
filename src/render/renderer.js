@@ -16,69 +16,66 @@ function getPageOrigin(width, height, metrics) {
   };
 }
 
-function getStampRect(metrics) {
+function getDropcapRect(metrics) {
   return {
-    width: metrics.lineHeight * 3.1,
-    height: metrics.lineHeight * 4.2
+    width: metrics.lineHeight * (metrics.isMobile ? 2.3 : 2.5),
+    height: metrics.lineHeight * (metrics.isMobile ? 2.2 : 2.4)
   };
 }
 
-function drawStamp(context, metrics, pageOrigin) {
-  const rect = getStampRect(metrics);
+function drawDropcap(context, metrics, pageOrigin) {
+  const rect = getDropcapRect(metrics);
   const x = pageOrigin.x + metrics.margin;
-  const y = pageOrigin.y + metrics.margin + metrics.lineHeight * 1.8;
+  const y = pageOrigin.y + metrics.margin + metrics.lineHeight * 2.1;
   context.save();
-  context.globalAlpha = 0.82;
-  context.fillStyle = "rgba(180, 66, 46, 0.12)";
-  context.fillRect(x, y, rect.width, rect.height);
-  context.strokeStyle = SEAL;
-  context.lineWidth = 2;
-  context.strokeRect(x, y, rect.width, rect.height);
-  context.fillStyle = SEAL;
-  context.font = `bold ${Math.round(metrics.fontSize * 2.1)}px "Songti SC", "STSong", serif`;
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillText(article.title, x + rect.width / 2, y + rect.height / 2);
+  context.fillStyle = INK;
+  context.textAlign = "left";
+  context.textBaseline = "top";
+  context.font = `600 ${Math.round(metrics.fontSize * (metrics.isMobile ? 2.3 : 2.55))}px "Iowan Old Style", "Songti SC", "STSong", serif`;
+  context.fillText(article.title, x, y);
   context.restore();
   return { ...rect, x, y };
 }
 
 function drawTitle(context, metrics, pageOrigin) {
   context.save();
-  context.fillStyle = INK;
-  context.textBaseline = "top";
-  context.font = `600 ${Math.round(metrics.fontSize * 1.35)}px "Songti SC", "STSong", serif`;
-  context.fillText(article.title, pageOrigin.x + metrics.margin, pageOrigin.y + metrics.margin * 0.6);
   context.fillStyle = ACCENT;
-  context.font = `${Math.round(metrics.fontSize * 0.8)}px "Songti SC", "STSong", serif`;
-  context.fillText(article.subtitle, pageOrigin.x + metrics.margin + metrics.fontSize * 3.3, pageOrigin.y + metrics.margin * 0.9);
+  context.textBaseline = "top";
+  context.font = `${Math.round(metrics.fontSize * (metrics.isMobile ? 0.7 : 0.76))}px "Iowan Old Style", "Songti SC", "STSong", serif`;
+  context.fillText(article.subtitle, pageOrigin.x + metrics.margin, pageOrigin.y + metrics.margin * 0.72);
   context.restore();
 }
 
 function drawBamboo(context, assets, width, height) {
   context.save();
-  context.globalAlpha = 0.08;
-  const bambooWidth = Math.min(180, width * 0.18);
+  context.globalAlpha = width <= 768 ? 0.045 : 0.065;
+  const bambooWidth = Math.min(width <= 768 ? 120 : 180, width * (width <= 768 ? 0.13 : 0.18));
   const ratio = assets.bamboo.height / assets.bamboo.width;
   const bambooHeight = bambooWidth * ratio;
-  context.drawImage(assets.bamboo, width - bambooWidth * 0.82, 42, bambooWidth, bambooHeight);
-  context.translate(42, height - bambooHeight * 0.34);
+  context.drawImage(assets.bamboo, width - bambooWidth * (width <= 768 ? 0.7 : 0.82), width <= 768 ? 74 : 42, bambooWidth, bambooHeight);
+  context.translate(width <= 768 ? 26 : 42, height - bambooHeight * (width <= 768 ? 0.22 : 0.34));
   context.rotate(-Math.PI / 2.9);
-  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.44, bambooHeight * 0.44);
+  context.drawImage(assets.bamboo, 0, 0, bambooWidth * (width <= 768 ? 0.26 : 0.44), bambooHeight * (width <= 768 ? 0.26 : 0.44));
   context.restore();
 }
 
-function paragraphLineBoxes(metrics, stamp, cat, leaves) {
-  return [
+function paragraphLineBoxes(metrics, dropcap, cat, leaves) {
+  const boxes = [
     {
-      x: stamp.x - 4,
-      y: stamp.y - 4,
-      width: stamp.width + 8,
-      height: stamp.height + 8
+      x: dropcap.x - 2,
+      y: dropcap.y - 2,
+      width: dropcap.width + 4,
+      height: dropcap.height + 4
     },
-    ...getDragonBoxes(cat, 12),
+    ...getDragonBoxes(cat, metrics.isMobile ? 6 : 10),
     ...getFireBoxes(leaves, 10)
   ];
+
+  if (metrics.isMobile) {
+    return boxes.filter((box) => box.x < window.innerWidth * 0.56);
+  }
+
+  return boxes;
 }
 
 function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, boxes, particles }) {
@@ -93,7 +90,7 @@ function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, 
     y: particle.y - pageOrigin.y
   }));
 
-  let top = metrics.margin + metrics.lineHeight * 3.2;
+  let top = metrics.margin + metrics.lineHeight * (metrics.isMobile ? 2.9 : 3.2);
   const lines = [];
 
   for (const paragraph of paragraphs) {
@@ -101,17 +98,17 @@ function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, 
       text: paragraph,
       startY: top,
       lineHeight: metrics.lineHeight,
-      lineInset: metrics.fontSize * 0.25,
+      lineInset: metrics.fontSize * 0.18,
       pageLeft: metrics.margin,
       pageRight: metrics.pageWidth - metrics.margin,
       measureText: (text) => measureText(metrics.font, text),
       getLineExclusions: (lineTop) =>
         createExclusionBands(pageOrigin.y + lineTop, metrics.lineHeight, boxes, pageOrigin.x),
-      minSegmentWidth: metrics.fontSize * 3
+      minSegmentWidth: metrics.fontSize * (metrics.isMobile ? 2.2 : 3)
     });
 
     lines.push(...result.lines);
-    top = result.nextY + Math.round(metrics.lineHeight * 0.72);
+    top = result.nextY + Math.round(metrics.lineHeight * (metrics.isMobile ? 0.54 : 0.72));
   }
 
   for (const line of lines) {
@@ -158,10 +155,14 @@ export function createRenderer(canvas, assets) {
 
     const metrics = getMetrics(state.width, state.height);
     const pageOrigin = getPageOrigin(state.width, state.height, metrics);
-    const stamp = getStampRect(metrics);
+    const dropcap = getDropcapRect(metrics);
     const scale = Math.min(1, metrics.pageWidth / BASE_PAGE_WIDTH);
-    const anchorX = pageOrigin.x + metrics.margin + stamp.width * 1.25;
-    const anchorY = pageOrigin.y + metrics.margin + metrics.lineHeight * 4.3;
+    const anchorX = metrics.isMobile
+      ? pageOrigin.x + metrics.pageWidth - metrics.margin - 34
+      : pageOrigin.x + metrics.margin + dropcap.width * 1.25;
+    const anchorY = metrics.isMobile
+      ? pageOrigin.y + metrics.margin + metrics.lineHeight * 4.2
+      : pageOrigin.y + metrics.margin + metrics.lineHeight * 4.3;
     state.dragon = createDragon(anchorX, anchorY, scale);
   }
 
@@ -193,9 +194,9 @@ export function createRenderer(canvas, assets) {
     offscreenContext.fillRect(0, 0, state.width, state.height);
     drawBamboo(offscreenContext, assets, state.width, state.height);
     drawTitle(offscreenContext, metrics, pageOrigin);
-    const stamp = drawStamp(offscreenContext, metrics, pageOrigin);
+    const dropcap = drawDropcap(offscreenContext, metrics, pageOrigin);
 
-    const boxes = paragraphLineBoxes(metrics, stamp, state.dragon, state.fire);
+    const boxes = paragraphLineBoxes(metrics, dropcap, state.dragon, state.fire);
     renderArticle({
       context: offscreenContext,
       metrics,
