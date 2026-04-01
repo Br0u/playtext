@@ -48,14 +48,27 @@ function drawTitle(context, metrics, pageOrigin) {
 
 function drawBamboo(context, assets, width, height) {
   context.save();
-  context.globalAlpha = width <= 768 ? 0.045 : 0.065;
-  const bambooWidth = Math.min(width <= 768 ? 120 : 180, width * (width <= 768 ? 0.13 : 0.18));
   const ratio = assets.bamboo.height / assets.bamboo.width;
+  const columns = width <= 768 ? 3 : 4;
+  const bambooWidth = width / columns;
   const bambooHeight = bambooWidth * ratio;
-  context.drawImage(assets.bamboo, width - bambooWidth * (width <= 768 ? 0.7 : 0.82), width <= 768 ? 74 : 42, bambooWidth, bambooHeight);
-  context.translate(width <= 768 ? 26 : 42, height - bambooHeight * (width <= 768 ? 0.22 : 0.34));
-  context.rotate(-Math.PI / 2.9);
-  context.drawImage(assets.bamboo, 0, 0, bambooWidth * (width <= 768 ? 0.26 : 0.44), bambooHeight * (width <= 768 ? 0.26 : 0.44));
+
+  for (let index = 0; index < columns + 1; index += 1) {
+    const x = index * (bambooWidth * 0.88) - bambooWidth * 0.18;
+    const y = index % 2 === 0 ? 18 : 64;
+    context.globalAlpha = width <= 768 ? 0.035 : 0.05;
+    context.drawImage(assets.bamboo, x, y, bambooWidth, bambooHeight);
+  }
+
+  context.globalAlpha = width <= 768 ? 0.028 : 0.04;
+  context.translate(22, height - bambooHeight * 0.24);
+  context.rotate(-Math.PI / 2.95);
+  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.5, bambooHeight * 0.5);
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.globalAlpha = width <= 768 ? 0.024 : 0.035;
+  context.translate(width - 12, height * 0.32);
+  context.rotate(Math.PI / 2.9);
+  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.42, bambooHeight * 0.42);
   context.restore();
 }
 
@@ -212,7 +225,7 @@ export function createRenderer(canvas, assets) {
 
     context.clearRect(0, 0, state.width, state.height);
     context.drawImage(offscreen, 0, 0, state.width, state.height);
-    requestAnimationFrame(renderFrame);
+    setTimeout(() => requestAnimationFrame(renderFrame), 34);
   }
 
   resize();

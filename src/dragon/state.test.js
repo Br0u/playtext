@@ -14,6 +14,14 @@ describe("oneko motion", () => {
     expect(cat.y).toBeLessThan(360);
   });
 
+  it("uses a softer chase speed than the previous faster step size", () => {
+    const cat = createDragon(100, 100, 1);
+
+    updateDragon(cat, 16, { x: 420, y: 100 }, false);
+
+    expect(cat.x - 100).toBeLessThan(10);
+  });
+
   it("selects a directional sprite state while moving", () => {
     const cat = createDragon(120, 160, 1);
 

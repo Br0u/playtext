@@ -1,5 +1,5 @@
 const SPRITE_SIZE = 32;
-const NEKO_SPEED = 10;
+const NEKO_SPEED = 6.5;
 
 export const spriteSets = {
   idle: [[-3, -3]],
