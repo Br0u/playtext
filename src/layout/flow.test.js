@@ -63,4 +63,22 @@ describe("layoutParagraph", () => {
     expect(result.nextY).toBe(68);
     expect(result.lines.map((line) => line.text).join(" ")).toContain("epsilon");
   });
+
+  it("wraps chinese prose without requiring spaces", () => {
+    const result = layoutParagraph({
+      text: "盼望着盼望着东风来了春天的脚步近了",
+      startY: 16,
+      lineHeight: 20,
+      lineInset: 0,
+      pageLeft: 0,
+      pageRight: 80,
+      measureText: makeMeasure(),
+      getLineExclusions: () => [],
+      minSegmentWidth: 20
+    });
+
+    expect(result.lines.length).toBeGreaterThan(1);
+    expect(result.lines[0].text).not.toBe(result.lines[1].text);
+    expect(result.lines.map((line) => line.text).join("")).toBe("盼望着盼望着东风来了春天的脚步近了");
+  });
 });

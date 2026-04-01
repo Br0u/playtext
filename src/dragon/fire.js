@@ -1,33 +1,28 @@
-const FIRE_INTERVAL = 80;
+const LEAF_INTERVAL = 120;
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min);
 }
 
-export function spawnFire(dragon, particles, now) {
-  if (now - dragon.fireCooldown < FIRE_INTERVAL) {
+export function spawnFire(cat, particles, now) {
+  if (now - cat.fireCooldown < LEAF_INTERVAL) {
     return;
   }
 
-  dragon.fireCooldown = now;
-  const head = dragon.segments[0];
-  const originDistance = 35 * dragon.scale;
-  const originX = head.x + Math.cos(head.angle) * originDistance;
-  const originY = head.y + Math.sin(head.angle) * originDistance;
-  const burst = 3 + Math.floor(Math.random() * 3);
-
+  cat.fireCooldown = now;
+  const burst = 2 + Math.floor(Math.random() * 3);
   for (let index = 0; index < burst; index += 1) {
-    const angle = head.angle + randomBetween(-0.125, 0.125);
-    const speed = randomBetween(35, 55) * dragon.scale;
     particles.push({
-      x: originX + randomBetween(-4, 4),
-      y: originY + randomBetween(-4, 4),
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      size: randomBetween(8, 20) * dragon.scale,
+      x: cat.x + randomBetween(-18, 18) * cat.scale,
+      y: cat.y - 24 * cat.scale + randomBetween(-12, 12) * cat.scale,
+      vx: randomBetween(1.2, 2.8) * cat.facing,
+      vy: randomBetween(-1.6, 0.4),
+      size: randomBetween(14, 24) * cat.scale,
       age: 0,
-      life: 12 + Math.floor(Math.random() * 6),
-      variant: Math.floor(Math.random() * 3)
+      life: 40 + Math.floor(Math.random() * 24),
+      variant: Math.random() > 0.5 ? "leaf" : "paper",
+      spin: randomBetween(-0.08, 0.08),
+      rotation: randomBetween(-0.6, 0.6)
     });
   }
 }
@@ -36,26 +31,19 @@ export function updateFire(particles) {
   for (let index = particles.length - 1; index >= 0; index -= 1) {
     const particle = particles[index];
     particle.age += 1;
-    particle.x += particle.vx;
-    particle.y += particle.vy;
-    particle.vx *= 0.95;
-    particle.vy *= 0.95;
-    const lift = Math.max(0, (particle.age - 4) / particle.life);
-    particle.vy -= lift * 1.5;
+    particle.x += particle.vx * 3.2;
+    particle.y += particle.vy * 3.2;
+    particle.vx *= 0.99;
+    particle.vy += 0.018;
+    particle.rotation += particle.spin;
 
-    if (particle.age < 3) {
-      particle.size *= 1.15;
-    } else if (particle.age / particle.life > 0.75) {
-      particle.size *= 0.75;
-    }
-
-    if (particle.age >= particle.life || particle.size < 1.5) {
+    if (particle.age >= particle.life) {
       particles.splice(index, 1);
     }
   }
 }
 
-export function getFireBoxes(particles, padding = 8) {
+export function getFireBoxes(particles, padding = 10) {
   return particles.map((particle) => ({
     x: particle.x - particle.size / 2 - padding,
     y: particle.y - particle.size / 2 - padding,

@@ -8,38 +8,10 @@ function loadImage(src) {
 }
 
 export async function loadAssets() {
-  const [
-    head,
-    tongue,
-    wingFront,
-    wingBack,
-    dropcap,
-    ...rest
-  ] = await Promise.all([
-    loadImage("/dragon-sprites/head.png"),
-    loadImage("/dragon-sprites/tongue.png"),
-    loadImage("/dragon-sprites/wing-front.png"),
-    loadImage("/dragon-sprites/wing-back.png"),
-    loadImage("/images/dropcap.png"),
-    ...Array.from({ length: 19 }, (_, index) => loadImage(`/dragon-sprites/body-${index + 1}.png`)),
-    ...Array.from({ length: 10 }, (_, index) => loadImage(`/fire-sprites/Layer ${index + 2}.png`))
+  const [cat, bamboo] = await Promise.all([
+    loadImage("/images/cat-silhouette.svg"),
+    loadImage("/images/bamboo-ink.jpg")
   ]);
 
-  const body = rest.slice(0, 19);
-  const fire = rest.slice(19);
-
-  await new FontFace("Furia", "url(/fonts/furia-iii.ttf)")
-    .load()
-    .then((font) => document.fonts.add(font));
-  await document.fonts.ready;
-
-  return {
-    head,
-    tongue,
-    wingFront,
-    wingBack,
-    dropcap,
-    body,
-    fire
-  };
+  return { cat, bamboo };
 }

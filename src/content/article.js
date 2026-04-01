@@ -1,14 +1,11 @@
 export const article = {
-  title: "The Window",
+  title: "匆匆",
+  subtitle: "朱自清 散文节选",
   paragraphs: [
-    "There are afternoons when lying still feels less like idleness than a form of study. Thought loosens from the day and slips among remembered rooms. The breeze comes through the window, the curtain hesitates at the sill, and light arrives in fragments, as if the world outside were moving backward while the chamber stays perfectly still.",
-    "I once read a sentence that stopped me cold: we do not recover the past, we rewrite it in the language our present selves can bear. Since then I have distrusted the neatness of memory. What returns to us is not a preserved relic but a revised account, polished by desire, shame, convenience, and whatever story we need in order to continue.",
-    "It is tempting to believe we choose freely and only afterward call the result fate. Yet so often the road laid before us has been softened, lit, and named in advance. Power rarely drags us by force when it can persuade us to walk willingly. We mistake arrangement for freedom because the invitation is beautiful and the pressure is quiet.",
-    "Society changes its measure lines as a growing child marks height against a wall. What was once shared experience hardens into abstract categories, and those categories return to govern the people who made them. I have become suspicious of how quickly I sort before I understand. Labels arrive first, explanation later, and by then the judgment has already taken root.",
-    "We speak of modern life as if its tragedy were forgetting, but I think the deeper terror is that forgetting has become difficult. Messages, locations, searches, purchases, and private hesitations are kept as though a court might someday ask for proof. The past is no longer a fading countryside. It is an archive that follows us, tidy and searchable.",
-    "Worse still, we build that archive ourselves. We authorize it, confirm it, restore it from backup, and call the process convenience. Each bright little button asks for consent with such politeness that refusal begins to feel rude. We carve our own memorial tablets and set them upright in a graveyard named the future.",
-    "For all that machinery, the motive may still be embarrassingly old: we fear being left alone with no witness. To be seen, even by systems that do not love us, can feel preferable to vanishing. Exposure borrows the costume of intimacy. The ledger grows because silence frightens us more than surveillance.",
-    "A fly struck the glass beside my bed and snapped the thread of thought. It threw itself again and again against a barrier it could not comprehend, frantic before a world it could see and could not enter. I rose to open the window and wondered, with less certainty than I would like, how often I have done the same against clearer walls.",
-    "The room changed at once when the pane swung outward. Not because the world had altered, but because one small obstruction had been named and moved. Perhaps that is all lucidity ever is: not escape, not mastery, only the brief mercy of discovering which surface has been stopping the breath."
+    "燕子去了，有再来的时候；杨柳枯了，有再青的时候；桃花谢了，有再开的时候。但是，聪明的，你告诉我，我们的日子为什么一去不复返呢？",
+    "我不知道他们给了我多少日子；但我的手确乎是渐渐空虚了。在默默里算着，八千多日子已经从我手中溜去；像针尖上一滴水滴在大海里，我的日子滴在时间的流里，没有声音，也没有影子。",
+    "去的尽管去了，来的尽管来着；去来的中间，又怎样地匆匆呢？早上我起来的时候，小屋里射进两三方斜斜的太阳。太阳他有脚啊，轻轻悄悄地挪移了；我也茫茫然跟着旋转。",
+    "于是，洗手的时候，日子从水盆里过去；吃饭的时候，日子从饭碗里过去；默默时，便从凝然的双眼前过去。我觉察他去得匆匆了，伸出手遮挽时，他又从遮挽着的手边过去。",
+    "天黑时，我躺在床上，他便伶伶俐俐地从我身上跨过，从我脚边飞去了。等我睁开眼和太阳再见，这算又溜走了一日。我掩着面叹息，但是新来的日子的影儿又开始在叹息里闪过了。"
   ]
 };

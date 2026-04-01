@@ -7,7 +7,7 @@ import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
 import { createTextMeasurer } from "../layout/measure.js";
 import { prepareParagraphs } from "../layout/prepare.js";
-import { BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, getMetrics } from "./constants.js";
+import { ACCENT, BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, SEAL, getMetrics } from "./constants.js";
 
 function getPageOrigin(width, height, metrics) {
   return {
@@ -16,54 +16,72 @@ function getPageOrigin(width, height, metrics) {
   };
 }
 
-function getDropcapRect(metrics) {
-  const drawHeight = metrics.lineHeight * 7;
-  const ratio = 250 / 350;
-  const drawWidth = drawHeight * ratio;
+function getStampRect(metrics) {
   return {
-    width: drawWidth + 12,
-    height: drawHeight,
-    drawWidth,
-    drawHeight
+    width: metrics.lineHeight * 3.1,
+    height: metrics.lineHeight * 4.2
   };
 }
 
-function drawDropcap(context, assets, metrics, pageOrigin) {
-  const rect = getDropcapRect(metrics);
-  context.drawImage(
-    assets.dropcap,
-    pageOrigin.x + metrics.margin,
-    pageOrigin.y + metrics.margin,
-    rect.drawWidth,
-    rect.drawHeight
-  );
-  return rect;
+function drawStamp(context, metrics, pageOrigin) {
+  const rect = getStampRect(metrics);
+  const x = pageOrigin.x + metrics.margin;
+  const y = pageOrigin.y + metrics.margin + metrics.lineHeight * 1.8;
+  context.save();
+  context.globalAlpha = 0.82;
+  context.fillStyle = "rgba(180, 66, 46, 0.12)";
+  context.fillRect(x, y, rect.width, rect.height);
+  context.strokeStyle = SEAL;
+  context.lineWidth = 2;
+  context.strokeRect(x, y, rect.width, rect.height);
+  context.fillStyle = SEAL;
+  context.font = `bold ${Math.round(metrics.fontSize * 2.1)}px "Songti SC", "STSong", serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(article.title, x + rect.width / 2, y + rect.height / 2);
+  context.restore();
+  return { ...rect, x, y };
 }
 
-function paragraphLineBoxes(metrics, dropcap, pageOrigin, dragon, fire) {
-  const staticBoxes = [
+function drawTitle(context, metrics, pageOrigin) {
+  context.save();
+  context.fillStyle = INK;
+  context.textBaseline = "top";
+  context.font = `600 ${Math.round(metrics.fontSize * 1.35)}px "Songti SC", "STSong", serif`;
+  context.fillText(article.title, pageOrigin.x + metrics.margin, pageOrigin.y + metrics.margin * 0.6);
+  context.fillStyle = ACCENT;
+  context.font = `${Math.round(metrics.fontSize * 0.8)}px "Songti SC", "STSong", serif`;
+  context.fillText(article.subtitle, pageOrigin.x + metrics.margin + metrics.fontSize * 3.3, pageOrigin.y + metrics.margin * 0.9);
+  context.restore();
+}
+
+function drawBamboo(context, assets, width, height) {
+  context.save();
+  context.globalAlpha = 0.18;
+  const bambooWidth = Math.min(260, width * 0.24);
+  const ratio = assets.bamboo.height / assets.bamboo.width;
+  const bambooHeight = bambooWidth * ratio;
+  context.drawImage(assets.bamboo, width - bambooWidth * 0.92, 34, bambooWidth, bambooHeight);
+  context.translate(30, height - bambooHeight * 0.52);
+  context.rotate(-Math.PI / 2.9);
+  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.72, bambooHeight * 0.72);
+  context.restore();
+}
+
+function paragraphLineBoxes(metrics, stamp, cat, leaves) {
+  return [
     {
-      x: pageOrigin.x + metrics.margin - 4,
-      y: pageOrigin.y + metrics.margin - 4,
-      width: dropcap.width,
-      height: dropcap.height
+      x: stamp.x - 4,
+      y: stamp.y - 4,
+      width: stamp.width + 8,
+      height: stamp.height + 8
     },
-    ...getDragonBoxes(dragon, 10),
-    ...getFireBoxes(fire, 6)
+    ...getDragonBoxes(cat, 12),
+    ...getFireBoxes(leaves, 10)
   ];
-
-  return staticBoxes;
 }
 
-function renderArticle({
-  context,
-  metrics,
-  pageOrigin,
-  measureText,
-  paragraphs,
-  boxes,
-  particles
-}) {
+function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, boxes, particles }) {
   context.save();
   context.translate(pageOrigin.x, pageOrigin.y);
   context.font = metrics.font;
@@ -75,7 +93,7 @@ function renderArticle({
     y: particle.y - pageOrigin.y
   }));
 
-  let top = metrics.margin;
+  let top = metrics.margin + metrics.lineHeight * 3.2;
   const lines = [];
 
   for (const paragraph of paragraphs) {
@@ -83,22 +101,17 @@ function renderArticle({
       text: paragraph,
       startY: top,
       lineHeight: metrics.lineHeight,
-      lineInset: metrics.fontSize * 0.85,
+      lineInset: metrics.fontSize * 0.25,
       pageLeft: metrics.margin,
       pageRight: metrics.pageWidth - metrics.margin,
       measureText: (text) => measureText(metrics.font, text),
       getLineExclusions: (lineTop) =>
-        createExclusionBands(
-          pageOrigin.y + lineTop,
-          metrics.lineHeight,
-          boxes,
-          pageOrigin.x
-        ),
-      minSegmentWidth: 40
+        createExclusionBands(pageOrigin.y + lineTop, metrics.lineHeight, boxes, pageOrigin.x),
+      minSegmentWidth: metrics.fontSize * 3
     });
 
     lines.push(...result.lines);
-    top = result.nextY + Math.round(metrics.lineHeight * 0.55);
+    top = result.nextY + Math.round(metrics.lineHeight * 0.72);
   }
 
   for (const line of lines) {
@@ -123,7 +136,7 @@ export function createRenderer(canvas, assets) {
   const state = {
     width: window.innerWidth,
     height: window.innerHeight,
-    pointer: { x: 0, y: 0 },
+    pointer: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
     pointerActiveUntil: 0,
     pressed: false,
     dragon: null,
@@ -145,17 +158,17 @@ export function createRenderer(canvas, assets) {
 
     const metrics = getMetrics(state.width, state.height);
     const pageOrigin = getPageOrigin(state.width, state.height, metrics);
-    const dropcap = getDropcapRect(metrics);
-    const dragonScale = Math.min(1, metrics.pageWidth / BASE_PAGE_WIDTH);
-    const anchorX = pageOrigin.x + metrics.margin + dropcap.width * 0.8;
-    const anchorY = pageOrigin.y + metrics.margin - 70 * dragonScale;
-    state.dragon = createDragon(anchorX, anchorY, dragonScale);
+    const stamp = getStampRect(metrics);
+    const scale = Math.min(1, metrics.pageWidth / BASE_PAGE_WIDTH);
+    const anchorX = pageOrigin.x + metrics.margin + stamp.width * 1.25;
+    const anchorY = pageOrigin.y + metrics.margin + metrics.lineHeight * 4.3;
+    state.dragon = createDragon(anchorX, anchorY, scale);
   }
 
   function setPointer(x, y) {
     state.pointer.x = x;
     state.pointer.y = y;
-    state.pointerActiveUntil = performance.now() + 2000;
+    state.pointerActiveUntil = performance.now() + 1800;
   }
 
   function setPressed(pressed) {
@@ -165,7 +178,6 @@ export function createRenderer(canvas, assets) {
   function renderFrame(now) {
     const metrics = getMetrics(state.width, state.height);
     const pageOrigin = getPageOrigin(state.width, state.height, metrics);
-    const dropcap = getDropcapRect(metrics);
     const isIdle = now > state.pointerActiveUntil;
 
     updateDragon(state.dragon, now, state.pointer, isIdle);
@@ -176,10 +188,11 @@ export function createRenderer(canvas, assets) {
 
     offscreenContext.fillStyle = PAGE_BACKGROUND;
     offscreenContext.fillRect(0, 0, state.width, state.height);
+    drawBamboo(offscreenContext, assets, state.width, state.height);
+    drawTitle(offscreenContext, metrics, pageOrigin);
+    const stamp = drawStamp(offscreenContext, metrics, pageOrigin);
 
-    drawDropcap(offscreenContext, assets, metrics, pageOrigin);
-
-    const boxes = paragraphLineBoxes(metrics, dropcap, pageOrigin, state.dragon, state.fire);
+    const boxes = paragraphLineBoxes(metrics, stamp, state.dragon, state.fire);
     renderArticle({
       context: offscreenContext,
       metrics,
@@ -190,8 +203,8 @@ export function createRenderer(canvas, assets) {
       particles: state.fire
     });
 
-    drawFire(offscreenContext, state.fire, assets);
-    drawDragon(offscreenContext, state.dragon, assets, now);
+    drawFire(offscreenContext, state.fire);
+    drawDragon(offscreenContext, state.dragon, assets);
 
     context.clearRect(0, 0, state.width, state.height);
     context.drawImage(offscreen, 0, 0, state.width, state.height);

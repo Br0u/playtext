@@ -8,11 +8,11 @@ function influenceFromFire(particles, x, y) {
     const offsetY = y - particle.y;
     const distance = Math.hypot(offsetX, offsetY);
 
-    if (distance > 60 || distance < 0.1) {
+    if (distance > 82 || distance < 0.1) {
       continue;
     }
 
-    const local = 1 - distance / 60;
+    const local = 1 - distance / 82;
     const weighted = local * local * (1 - particle.age / particle.life);
     dx += (offsetX / distance) * weighted;
     dy += (offsetY / distance) * weighted;
@@ -55,8 +55,8 @@ export function drawHeatText(context, line, font, color, particles, measure) {
         line.y + 10 + influence.dy * force * 45
       );
       context.rotate(force * (influence.dx > 0 ? 1 : -1) * 1.2);
-      context.globalAlpha = Math.max(0, 1 - force * 0.8);
-      context.fillStyle = `rgb(${Math.round(42 + force * 200)}, ${Math.round(26 + force * 80)}, 10)`;
+      context.globalAlpha = Math.max(0.55, 1 - force * 0.45);
+      context.fillStyle = `rgb(${Math.round(34 + force * 40)}, ${Math.round(26 + force * 55)}, ${Math.round(18 + force * 24)})`;
       context.fillText(chunk, -width / 2, -10);
       context.restore();
     }

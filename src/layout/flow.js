@@ -1,13 +1,25 @@
 import { splitAvailableSegments } from "./exclusions.js";
 
 function tokenize(text) {
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const normalized = text.trim();
+  if (!normalized) {
+    return { tokens: [], separator: " " };
+  }
+
+  if (/\s/.test(normalized)) {
+    return {
+      tokens: normalized.split(/\s+/).filter(Boolean),
+      separator: " "
+    };
+  }
+
+  return {
+    tokens: Array.from(normalized),
+    separator: ""
+  };
 }
 
-function fitWordsIntoSegment(words, measureText, maxWidth) {
+function fitWordsIntoSegment(words, separator, measureText, maxWidth) {
   if (words.length === 0) {
     return { fittedText: "", usedWords: 0, width: 0 };
   }
@@ -21,7 +33,7 @@ function fitWordsIntoSegment(words, measureText, maxWidth) {
   }
 
   for (let index = 1; index < words.length; index += 1) {
-    const nextCandidate = `${candidate} ${words[index]}`;
+    const nextCandidate = `${candidate}${separator}${words[index]}`;
     const nextWidth = measureText(nextCandidate);
     if (nextWidth > maxWidth) {
       break;
@@ -45,7 +57,7 @@ export function layoutParagraph({
   getLineExclusions,
   minSegmentWidth = 48
 }) {
-  const words = tokenize(text);
+  const { tokens: words, separator } = tokenize(text);
   const lines = [];
   let cursor = 0;
   let top = startY;
@@ -78,7 +90,7 @@ export function layoutParagraph({
         continue;
       }
 
-      const fitted = fitWordsIntoSegment(words.slice(cursor), measureText, maxWidth);
+      const fitted = fitWordsIntoSegment(words.slice(cursor), separator, measureText, maxWidth);
       lines.push({
         text: fitted.fittedText,
         x: Math.round(segment.left),
