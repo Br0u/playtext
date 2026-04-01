@@ -46,14 +46,13 @@ export function getBambooBackdrop(width, height, image) {
   };
 }
 
-export function collectTextFlowBoxes(dropcap, dragonBoxes) {
+export function collectTextFlowBoxes(dropcap) {
   return [
     {
       x: dropcap.x - 2,
       y: dropcap.y - 2,
       width: dropcap.width + 4,
       height: dropcap.height + 4
-    },
-    ...dragonBoxes
+    }
   ];
 }

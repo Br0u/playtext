@@ -50,14 +50,10 @@ describe("getBambooBackdrop", () => {
 });
 
 describe("collectTextFlowBoxes", () => {
-  it("keeps paragraph flow stable by ignoring transient fire particles", () => {
+  it("keeps paragraph flow static by only reserving space for the drop cap", () => {
     const dropcap = { x: 100, y: 120, width: 40, height: 60 };
     const dragonBoxes = [{ x: 180, y: 150, width: 30, height: 30 }];
-    const fireBoxes = [{ x: 220, y: 160, width: 18, height: 18 }];
 
-    expect(collectTextFlowBoxes(dropcap, dragonBoxes, fireBoxes)).toEqual([
-      { x: 98, y: 118, width: 44, height: 64 },
-      { x: 180, y: 150, width: 30, height: 30 }
-    ]);
+    expect(collectTextFlowBoxes(dropcap, dragonBoxes)).toEqual([{ x: 98, y: 118, width: 44, height: 64 }]);
   });
 });
