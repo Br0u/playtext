@@ -1,5 +1,5 @@
 export const BASE_PAGE_WIDTH = 700;
-export const BASE_PAGE_HEIGHT = 960;
+export const BASE_PAGE_HEIGHT = 1040;
 export const BASE_MARGIN = 45;
 export const BASE_FONT_SIZE = 26;
 export const BASE_LINE_HEIGHT = 44;
@@ -12,7 +12,7 @@ export const FONT_STACK = '"Iowan Old Style", "Songti SC", "STSong", "Noto Serif
 export function getMetrics(width, height) {
   const isMobile = width <= 768;
   const pageWidth = Math.min(BASE_PAGE_WIDTH, width - (isMobile ? 22 : 40));
-  const pageHeight = Math.min(BASE_PAGE_HEIGHT, height - (isMobile ? 28 : 60));
+  const pageHeight = Math.min(BASE_PAGE_HEIGHT, height - (isMobile ? 24 : 48));
   const scale = pageWidth / BASE_PAGE_WIDTH;
   const fontSize = Math.max(isMobile ? 20 : 22, Math.round(BASE_FONT_SIZE * (isMobile ? 0.52 + 0.38 * scale : 0.48 + 0.52 * scale)));
   const lineHeight = Math.max(isMobile ? 34 : 38, Math.round(BASE_LINE_HEIGHT * (isMobile ? 0.54 + 0.34 * scale : 0.5 + 0.5 * scale)));

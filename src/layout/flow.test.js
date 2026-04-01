@@ -47,7 +47,7 @@ describe("layoutParagraph", () => {
       text: "alpha beta gamma delta epsilon",
       startY: 20,
       lineHeight: 24,
-      lineInset: 30,
+      linePadding: 30,
       pageLeft: 40,
       pageRight: 360,
       measureText: makeMeasure(),
@@ -57,11 +57,27 @@ describe("layoutParagraph", () => {
     });
 
     expect(result.lines.length).toBeGreaterThanOrEqual(3);
-    expect(result.lines[0].x).toBe(40);
+    expect(result.lines[0].x).toBe(70);
     expect(result.lines[1].x).toBe(200);
     expect(result.lineCount).toBe(2);
     expect(result.nextY).toBe(68);
     expect(result.lines.map((line) => line.text).join(" ")).toContain("epsilon");
+  });
+
+  it("applies left padding by moving the text start, instead of only shrinking available width", () => {
+    const result = layoutParagraph({
+      text: "alpha beta gamma",
+      startY: 0,
+      lineHeight: 24,
+      linePadding: 20,
+      pageLeft: 40,
+      pageRight: 180,
+      measureText: makeMeasure(),
+      getLineExclusions: () => [],
+      minSegmentWidth: 20
+    });
+
+    expect(result.lines[0].x).toBe(60);
   });
 
   it("wraps chinese prose without requiring spaces", () => {
@@ -69,7 +85,7 @@ describe("layoutParagraph", () => {
       text: "盼望着盼望着东风来了春天的脚步近了",
       startY: 16,
       lineHeight: 20,
-      lineInset: 0,
+      linePadding: 0,
       pageLeft: 0,
       pageRight: 80,
       measureText: makeMeasure(),
@@ -87,7 +103,7 @@ describe("layoutParagraph", () => {
       text: "o==^==o /\\_/\\\\",
       startY: 0,
       lineHeight: 20,
-      lineInset: 0,
+      linePadding: 0,
       pageLeft: 0,
       pageRight: 260,
       measureText: makeMeasure(),
@@ -103,7 +119,7 @@ describe("layoutParagraph", () => {
       text: "燕子去了有再来的时候杨柳枯了有再青的时候桃花谢了有再开的时候但是聪明的你告诉我我们的日子为什么一去不复返呢",
       startY: 0,
       lineHeight: 24,
-      lineInset: 0,
+      linePadding: 0,
       pageLeft: 0,
       pageRight: 240,
       measureText: makeMeasure(),

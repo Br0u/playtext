@@ -7,68 +7,45 @@ import { createExclusionBands } from "../layout/exclusions.js";
 import { layoutParagraph } from "../layout/flow.js";
 import { createTextMeasurer } from "../layout/measure.js";
 import { prepareParagraphs } from "../layout/prepare.js";
-import { ACCENT, BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, SEAL, getMetrics } from "./constants.js";
-
-function getPageOrigin(width, height, metrics) {
-  return {
-    x: Math.round((width - metrics.pageWidth) / 2),
-    y: Math.round(Math.max(20, (height - metrics.pageHeight) / 2))
-  };
-}
+import { getArticleTop, getBambooBackdrop, getPageOrigin, getTitleLayout } from "./composition.js";
+import { ACCENT, BASE_PAGE_WIDTH, PAGE_BACKGROUND, INK, getMetrics } from "./constants.js";
 
 function getDropcapRect(metrics) {
   return {
-    width: metrics.lineHeight * (metrics.isMobile ? 2.3 : 2.5),
-    height: metrics.lineHeight * (metrics.isMobile ? 2.2 : 2.4)
+    width: metrics.lineHeight * (metrics.isMobile ? 1.18 : 1.26),
+    height: metrics.lineHeight * (metrics.isMobile ? 2.5 : 2.72)
   };
 }
 
 function drawDropcap(context, metrics, pageOrigin) {
-  const rect = getDropcapRect(metrics);
-  const x = pageOrigin.x + metrics.margin;
-  const y = pageOrigin.y + metrics.margin + metrics.lineHeight * 2.1;
+  const title = getTitleLayout(metrics, pageOrigin, article.title, getArticleTop(metrics));
   context.save();
-  context.fillStyle = INK;
+  context.fillStyle = `rgba(34, 26, 18, ${metrics.isMobile ? 0.74 : 0.68})`;
   context.textAlign = "left";
   context.textBaseline = "top";
-  context.font = `600 ${Math.round(metrics.fontSize * (metrics.isMobile ? 2.3 : 2.55))}px "Iowan Old Style", "Songti SC", "STSong", serif`;
-  context.fillText(article.title, x, y);
+  context.font = `600 ${title.fontSize}px "Iowan Old Style", "Songti SC", "STSong", serif`;
+  for (const glyph of title.glyphs) {
+    context.fillText(glyph.glyph, glyph.x, glyph.y);
+  }
   context.restore();
-  return { ...rect, x, y };
+  return { x: title.x, y: title.y, width: title.width, height: title.height };
 }
 
 function drawTitle(context, metrics, pageOrigin) {
   context.save();
   context.fillStyle = ACCENT;
   context.textBaseline = "top";
-  context.font = `${Math.round(metrics.fontSize * (metrics.isMobile ? 0.7 : 0.76))}px "Iowan Old Style", "Songti SC", "STSong", serif`;
-  context.fillText(article.subtitle, pageOrigin.x + metrics.margin, pageOrigin.y + metrics.margin * 0.72);
+  context.font = `${Math.round(metrics.fontSize * (metrics.isMobile ? 0.68 : 0.74))}px "Iowan Old Style", "Songti SC", "STSong", serif`;
+  context.fillText(article.subtitle, pageOrigin.x + metrics.margin, pageOrigin.y + metrics.margin * 0.68);
   context.restore();
 }
 
 function drawBamboo(context, assets, width, height) {
+  const backdrop = getBambooBackdrop(width, height, assets.bamboo);
+
   context.save();
-  const ratio = assets.bamboo.height / assets.bamboo.width;
-  const columns = width <= 768 ? 3 : 4;
-  const bambooWidth = width / columns;
-  const bambooHeight = bambooWidth * ratio;
-
-  for (let index = 0; index < columns + 1; index += 1) {
-    const x = index * (bambooWidth * 0.88) - bambooWidth * 0.18;
-    const y = index % 2 === 0 ? 18 : 64;
-    context.globalAlpha = width <= 768 ? 0.035 : 0.05;
-    context.drawImage(assets.bamboo, x, y, bambooWidth, bambooHeight);
-  }
-
-  context.globalAlpha = width <= 768 ? 0.028 : 0.04;
-  context.translate(22, height - bambooHeight * 0.24);
-  context.rotate(-Math.PI / 2.95);
-  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.5, bambooHeight * 0.5);
-  context.setTransform(1, 0, 0, 1, 0, 0);
-  context.globalAlpha = width <= 768 ? 0.024 : 0.035;
-  context.translate(width - 12, height * 0.32);
-  context.rotate(Math.PI / 2.9);
-  context.drawImage(assets.bamboo, 0, 0, bambooWidth * 0.42, bambooHeight * 0.42);
+  context.globalAlpha = backdrop.alpha;
+  context.drawImage(assets.bamboo, backdrop.x, backdrop.y, backdrop.width, backdrop.height);
   context.restore();
 }
 
@@ -103,7 +80,7 @@ function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, 
     y: particle.y - pageOrigin.y
   }));
 
-  let top = metrics.margin + metrics.lineHeight * (metrics.isMobile ? 2.9 : 3.2);
+  let top = getArticleTop(metrics);
   const lines = [];
 
   for (const paragraph of paragraphs) {
@@ -111,7 +88,7 @@ function renderArticle({ context, metrics, pageOrigin, measureText, paragraphs, 
       text: paragraph,
       startY: top,
       lineHeight: metrics.lineHeight,
-      lineInset: metrics.fontSize * 0.18,
+      linePadding: 0,
       pageLeft: metrics.margin,
       pageRight: metrics.pageWidth - metrics.margin,
       measureText: (text) => measureText(metrics.font, text),

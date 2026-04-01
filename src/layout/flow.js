@@ -50,7 +50,7 @@ export function layoutParagraph({
   text,
   startY,
   lineHeight,
-  lineInset,
+  linePadding = 0,
   pageLeft,
   pageRight,
   measureText,
@@ -85,7 +85,8 @@ export function layoutParagraph({
         break;
       }
 
-      const maxWidth = segment.right - segment.left - lineInset;
+      const paddedLeft = segment.left === pageLeft ? segment.left + linePadding : segment.left;
+      const maxWidth = segment.right - paddedLeft;
       if (maxWidth < minSegmentWidth) {
         continue;
       }
@@ -93,7 +94,7 @@ export function layoutParagraph({
       const fitted = fitWordsIntoSegment(words.slice(cursor), separator, measureText, maxWidth);
       lines.push({
         text: fitted.fittedText,
-        x: Math.round(segment.left),
+        x: Math.round(paddedLeft),
         y: Math.round(top),
         width: fitted.width
       });
