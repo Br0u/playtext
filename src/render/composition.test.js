@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getTitleLayout } from "./composition.js";
+import { collectTextFlowBoxes, getArticleTop, getBambooBackdrop, getDragonTextFlowBox, getTitleLayout } from "./composition.js";
 import { getMetrics } from "./constants.js";
 
 describe("getMetrics", () => {
@@ -50,10 +50,36 @@ describe("getBambooBackdrop", () => {
 });
 
 describe("collectTextFlowBoxes", () => {
-  it("keeps paragraph flow static by only reserving space for the drop cap", () => {
+  it("keeps paragraph flow stable while still allowing one local dragon avoidance box", () => {
     const dropcap = { x: 100, y: 120, width: 40, height: 60 };
-    const dragonBoxes = [{ x: 180, y: 150, width: 30, height: 30 }];
+    const dragonBox = { x: 180, y: 150, width: 30, height: 30 };
 
-    expect(collectTextFlowBoxes(dropcap, dragonBoxes)).toEqual([{ x: 98, y: 118, width: 44, height: 64 }]);
+    expect(collectTextFlowBoxes(dropcap, dragonBox)).toEqual([
+      { x: 98, y: 118, width: 44, height: 64 },
+      { x: 180, y: 150, width: 30, height: 30 }
+    ]);
+  });
+});
+
+describe("getDragonTextFlowBox", () => {
+  it("turns the moving dragon into one continuous exclusion block inside the text column", () => {
+    const metrics = { margin: 40, pageWidth: 700, pageHeight: 1040, lineHeight: 44 };
+    const pageOrigin = { x: 100, y: 20 };
+    const cat = { x: 280, y: 260, scale: 1 };
+
+    expect(getDragonTextFlowBox(cat, metrics, pageOrigin)).toEqual({
+      x: 257,
+      y: 235,
+      width: 46,
+      height: 42
+    });
+  });
+
+  it("ignores the dragon when it is outside the text column", () => {
+    const metrics = { margin: 40, pageWidth: 700, pageHeight: 1040, lineHeight: 44 };
+    const pageOrigin = { x: 100, y: 20 };
+    const cat = { x: 60, y: 260, scale: 1 };
+
+    expect(getDragonTextFlowBox(cat, metrics, pageOrigin)).toBeNull();
   });
 });
